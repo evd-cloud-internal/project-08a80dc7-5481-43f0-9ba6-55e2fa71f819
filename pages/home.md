@@ -289,7 +289,7 @@ ORDER BY date
 {% big_value
   data="aum_metrics"
   value="sum(contract_count)"
-  title="Archived Contracts"
+  title="Active Contracts"
   info="Total number of fully executed (archived) contracts. Each contract represents a completed property share investment."
   fmt="#,##0"
   date_range={
