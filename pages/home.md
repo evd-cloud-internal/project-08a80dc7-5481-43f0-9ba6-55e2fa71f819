@@ -104,6 +104,8 @@ ORDER BY date
 
 
 
+---
+
 ## 💰 Transaction Performance
 
 ```sql order_metrics
@@ -252,6 +254,8 @@ ORDER BY date
 /%}
 
 
+
+---
 
 ## 🏦 Assets Under Management
 
