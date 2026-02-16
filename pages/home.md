@@ -15,6 +15,7 @@ type: page
 {% /filter_bar %}
 
 ## 👤 User Acquisition & Activation
+---
 
 ```sql user_metrics
 SELECT
@@ -61,14 +62,23 @@ ORDER BY date
   data="user_metrics"
   value="sum(kyc_completions) * 1.0 / sum(new_registrations)"
   title="KYC Conversion Rate"
-  info="Overall percentage of registered users who completed KYC verification. Calculated as total KYC completions ÷ total registrations in the selected period."
+  info="Overall percentage of registered users who completed KYC verification. Calculated as total KYC completions ÷ total registrations in the selected period. Target: 30%."
   fmt="pct1"
   date_range={
     date="date"
     range={{date_range}}
   }
   comparison={
-    compare_vs="prior period"
+    compare_vs="target"
+    target="0.3"
+  }
+  sparkline={
+    type="area"
+    x="date"
+    date_range={
+      range={{date_range}}
+      date="date"
+    }
   }
 /%}
 
@@ -107,6 +117,7 @@ ORDER BY date
 ---
 
 ## 💰 Transaction Performance
+---
 
 ```sql order_metrics
 SELECT
@@ -258,6 +269,7 @@ ORDER BY date
 ---
 
 ## 🏦 Assets Under Management
+---
 
 ```sql aum_metrics
 SELECT
