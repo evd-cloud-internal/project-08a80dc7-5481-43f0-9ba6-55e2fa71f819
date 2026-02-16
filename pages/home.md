@@ -25,18 +25,8 @@ SELECT
   toDate(registered_at) as date,
   count(*) as new_registrations,
   countIf(is_kyc_verified = true) as kyc_completions,
-  if(count(*) > 0, countIf(is_kyc_verified = true) / count(*), 0) as activation_rate
+  countIf(user_segment = 'Investor') as active_investors
 FROM users_enriched
-GROUP BY date
-ORDER BY date
-```
-
-```sql investor_metrics
-SELECT
-  toDate(registered_at) as date,
-  count(DISTINCT id) as active_investors
-FROM users_enriched
-WHERE user_segment = 'Investor'
 GROUP BY date
 ORDER BY date
 ```
@@ -73,9 +63,9 @@ ORDER BY date
 
 {% big_value
   data="user_metrics"
-  value="avg(activation_rate)"
-  title="Activation Rate"
-  info="Percentage of registered users who completed KYC verification. Measures the registration-to-KYC conversion funnel."
+  value="sum(kyc_completions) * 1.0 / sum(new_registrations)"
+  title="KYC Conversion Rate"
+  info="Overall percentage of registered users who completed KYC verification. Calculated as total KYC completions ÷ total registrations in the selected period."
   fmt="pct1"
   date_range={
     date="date"
@@ -87,7 +77,7 @@ ORDER BY date
 /%}
 
 {% big_value
-  data="investor_metrics"
+  data="user_metrics"
   value="sum(active_investors)"
   title="Active Investors"
   info="Number of unique users with at least one successful order (classified as 'Investor' segment)."
@@ -101,9 +91,20 @@ ORDER BY date
   }
 /%}
 
-{% callout type="info" title="💡 Insight: User Funnel" %}
-**Monitor the gap between Registrations and KYC Completions.** A low Activation Rate signals friction in the KYC process — consider simplifying document upload, adding progress indicators, or sending reminder nudges to incomplete profiles. Every 1% improvement in activation rate directly expands your investable user base.
-{% /callout %}
+{% big_value
+  data="user_metrics"
+  value="sum(active_investors) * 1.0 / sum(new_registrations)"
+  title="Activation Rate"
+  info="Overall percentage of registered users who became active investors. Calculated as total active investors ÷ total registrations in the selected period."
+  fmt="pct1"
+  date_range={
+    date="date"
+    range={{date_range}}
+  }
+  comparison={
+    compare_vs="prior period"
+  }
+/%}
 
 {% line_chart
   data="user_metrics"
@@ -125,7 +126,6 @@ SELECT
   count(*) as total_orders,
   countIf(`o.status` = 'SUCCESS') as success_orders,
   countIf(`o.status` = 'FAILED') as failed_orders,
-  if(count(*) > 0, countIf(`o.status` = 'SUCCESS') / count(*), 0) as order_success_rate,
   sumIf(total_investment, `o.status` = 'SUCCESS') as gmv,
   sumIf(shares, `o.status` = 'SUCCESS') as total_shares
 FROM orders_enriched
@@ -151,7 +151,7 @@ ORDER BY date
 
 {% big_value
   data="order_metrics"
-  value="avg(order_success_rate)"
+  value="sum(success_orders) * 1.0 / sum(total_orders)"
   title="Order Success Rate"
   info="Percentage of primary marketplace orders that completed successfully vs failed. A key indicator of payment and checkout health."
   fmt="pct1"
@@ -193,10 +193,6 @@ ORDER BY date
     compare_vs="prior period"
   }
 /%}
-
-{% callout type="info" title="💡 Insight: Order Health" %}
-**A high failure rate is lost revenue.** Each failed order represents a user who intended to invest but couldn't complete payment. Investigate top failure reasons (payment timeouts, insufficient funds, gateway errors) and prioritize retry mechanisms, alternative payment methods, and real-time error messaging to recover these conversions.
-{% /callout %}
 
 {% line_chart
   data="order_metrics"
@@ -269,8 +265,6 @@ ORDER BY date
   }
 /%}
 
-{% callout type="info" title="💡 Insight: AUM Growth" %}
-**AUM is your north-star metric for platform scale.** Consistent AUM growth validates product-market fit. Track the ratio of AUM growth to marketing spend for unit economics. If AUM growth is slowing while registrations increase, the bottleneck is likely in the conversion funnel (KYC → first purchase) rather than top-of-funnel awareness.
-{% /callout %}
+
 
 
