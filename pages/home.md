@@ -106,17 +106,7 @@ ORDER BY date
   }
 /%}
 
-{% line_chart
-  data="user_metrics"
-  x="date"
-  y="sum(new_registrations)"
-  title="New Users Per Day"
-  y_fmt="#,##0"
-  date_range={
-    date="date"
-    range={{date_range}}
-  }
-/%}
+
 
 ## 💰 Transaction Performance
 
@@ -194,17 +184,7 @@ ORDER BY date
   }
 /%}
 
-{% line_chart
-  data="order_metrics"
-  x="date"
-  y="sum(total_shares)"
-  title="Shares Sold Per Day"
-  y_fmt="#,##0"
-  date_range={
-    date="date"
-    range={{date_range}}
-  }
-/%}
+
 
 ## 🏦 Assets Under Management
 
