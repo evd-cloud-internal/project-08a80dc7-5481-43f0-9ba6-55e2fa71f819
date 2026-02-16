@@ -6,10 +6,6 @@ type: page
 
 # 📊 Executive KPIs Dashboard
 
-{% callout type="info" title="Primary Marketplace Only" %}
-All KPIs on this dashboard reflect **Primary Marketplace** activity only (excludes resale transactions). Use the date range filter below to analyze any period. All KPIs compare against the prior period automatically.
-{% /callout %}
-
 {% filter_bar %}
   {% range_calendar
     id="date_range"
@@ -115,21 +111,122 @@ SELECT
   toDate(`o.created_at`) as date,
   count(*) as total_orders,
   countIf(`o.status` = 'SUCCESS') as success_orders,
-  countIf(`o.status` = 'FAILED') as failed_orders,
-  sumIf(total_investment, `o.status` = 'SUCCESS') as gmv,
-  sumIf(shares, `o.status` = 'SUCCESS') as total_shares
+  countIf(`o.status` = 'SUCCESS' AND is_resale_order = 0) as primary_orders,
+  countIf(`o.status` = 'SUCCESS' AND is_resale_order = 1) as resale_orders,
+  sumIf(total_investment, `o.status` = 'SUCCESS' AND is_resale_order = 0) as primary_revenue,
+  sumIf(shares, `o.status` = 'SUCCESS' AND is_resale_order = 0) as primary_shares,
+  sumIf(shares, `o.status` = 'SUCCESS' AND is_resale_order = 1) as resale_shares
 FROM orders_enriched
-WHERE is_resale_order = 0
+GROUP BY date
+ORDER BY date
+```
+
+```sql resale_take_rate
+SELECT
+  toDate(buyer_order_created_at) as date,
+  sum(commission_amount + buyer_transfer_fee) as take_rate_revenue
+FROM resale_enriched
+WHERE resale_status_label = 'Sold'
 GROUP BY date
 ORDER BY date
 ```
 
 {% big_value
   data="order_metrics"
-  value="sum(gmv)"
-  title="Revenue (GMV)"
-  info="Gross Merchandise Value — total investment value from successful primary marketplace orders. Excludes resale transactions."
+  value="sum(success_orders)"
+  title="Total Successful Orders"
+  info="Total number of successfully completed orders (primary + resale) in the selected period."
+  fmt="#,##0"
+  date_range={
+    date="date"
+    range={{date_range}}
+  }
+  comparison={
+    compare_vs="prior period"
+  }
+/%}
+
+{% big_value
+  data="order_metrics"
+  value="sum(primary_orders)"
+  title="Primary Orders"
+  info="Number of successful primary marketplace orders in the selected period."
+  fmt="#,##0"
+  date_range={
+    date="date"
+    range={{date_range}}
+  }
+  comparison={
+    compare_vs="prior period"
+  }
+/%}
+
+{% big_value
+  data="order_metrics"
+  value="sum(resale_orders)"
+  title="Resale Orders"
+  info="Number of successful resale marketplace orders in the selected period."
+  fmt="#,##0"
+  date_range={
+    date="date"
+    range={{date_range}}
+  }
+  comparison={
+    compare_vs="prior period"
+  }
+/%}
+
+{% big_value
+  data="order_metrics"
+  value="sum(primary_revenue)"
+  title="Primary Revenue"
+  info="Total investment value from successful primary marketplace orders."
   fmt="#,##0' EGP'"
+  date_range={
+    date="date"
+    range={{date_range}}
+  }
+  comparison={
+    compare_vs="prior period"
+  }
+/%}
+
+{% big_value
+  data="resale_take_rate"
+  value="sum(take_rate_revenue)"
+  title="Resale Take Rate Revenue"
+  info="Platform revenue from resale transactions — includes seller commission and buyer transfer fee (~4% combined)."
+  fmt="#,##0' EGP'"
+  date_range={
+    date="date"
+    range={{date_range}}
+  }
+  comparison={
+    compare_vs="prior period"
+  }
+/%}
+
+{% big_value
+  data="order_metrics"
+  value="sum(primary_shares)"
+  title="Primary Shares Sold"
+  info="Total number of property shares purchased through successful primary marketplace orders."
+  fmt="#,##0"
+  date_range={
+    date="date"
+    range={{date_range}}
+  }
+  comparison={
+    compare_vs="prior period"
+  }
+/%}
+
+{% big_value
+  data="order_metrics"
+  value="sum(resale_shares)"
+  title="Resale Shares Sold"
+  info="Total number of property shares traded through successful resale orders."
+  fmt="#,##0"
   date_range={
     date="date"
     range={{date_range}}
@@ -143,38 +240,8 @@ ORDER BY date
   data="order_metrics"
   value="sum(success_orders) * 1.0 / sum(total_orders)"
   title="Order Success Rate"
-  info="Percentage of primary marketplace orders that completed successfully vs failed. A key indicator of payment and checkout health."
+  info="Percentage of all orders (primary + resale) that completed successfully. A key indicator of payment and checkout health."
   fmt="pct1"
-  date_range={
-    date="date"
-    range={{date_range}}
-  }
-  comparison={
-    compare_vs="prior period"
-  }
-/%}
-
-{% big_value
-  data="order_metrics"
-  value="sum(success_orders)"
-  title="Successful Purchases"
-  info="Total number of successfully completed primary marketplace orders in the selected period."
-  fmt="#,##0"
-  date_range={
-    date="date"
-    range={{date_range}}
-  }
-  comparison={
-    compare_vs="prior period"
-  }
-/%}
-
-{% big_value
-  data="order_metrics"
-  value="sum(total_shares)"
-  title="Shares Sold"
-  info="Total number of property shares purchased through successful primary marketplace orders."
-  fmt="#,##0"
   date_range={
     date="date"
     range={{date_range}}
